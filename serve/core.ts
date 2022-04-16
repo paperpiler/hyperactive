@@ -64,7 +64,11 @@ export const noop = async (): Promise<void> => void 0;
 
 export function serve<State>(opts: Deno.ListenOptions, handler: Middleware<State>) {
 	async function handleHttp(conn: Deno.Conn) {
-		for await (const e of Deno.serveHttp(conn)) {
+		const httpConn = Deno.serveHttp(conn);
+
+		while (true) {
+			const e = await httpConn.nextRequest();
+			if (e === null) return;
 			const ctx = Context(e);
 			handler(ctx, () => h404(ctx, noop));
 		}
